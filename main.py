@@ -4,30 +4,43 @@ from PIL import Image
 from io import BytesIO
 from config import api_key, api_secret, bearer_token, access_token, access_token_secret
 
-client = tweepy.Client(bearer_token, api_key, api_secret, access_token, access_token_secret)
+'''
+importing libraries
+pip install tweepy
+pip install pytube requests pillow
+'''
+def main():
+    #initializing API
+    client = tweepy.Client(bearer_token, api_key, api_secret, access_token, access_token_secret)
 
-auth = tweepy.OAuth1UserHandler(api_key, api_secret, access_token, access_token_secret)
-api = tweepy.API(auth)
+    #Creating Playlist variable
+    p = Playlist('https://www.youtube.com/playlist?list=PLh6Ws4Fpphfqr7VL72Q6HK5Ole9YI54hv')
+    print("Loaded playlist.")
+    playlistVideos = p.videos
 
-#Creating Playlist variable
-p = Playlist('https://www.youtube.com/playlist?list=PLh6Ws4Fpphfqr7VL72Q6HK5Ole9YI54hv')
-print("Loaded playlist.")
-PlaylistVideos = p.videos
+    #choosing random video
+    randomVideo = random.choice(playlistVideos)
 
-#choosing random video
-randomVideo = random.choice(PlaylistVideos)
+    #getting video ID & link
+    videoID = randomVideo.video_id
+    link = randomVideo.watch_url
 
-#getting url
-link = randomVideo.watch_url
+    #extracting thumbnail image
+    thumbnail = f'https://img.youtube.com/vi/{videoID}/maxresdefault.jpg'
+    response = requests.get(thumbnail)
+    image = Image.open(BytesIO(response.content))
 
-#saving thumbnail image
-thumbnail = randomVideo.thumbnail_url
-response = requests.get(thumbnail)
-image = Image.open(BytesIO(response.content))
-image.show()
+    #saving to bytesIO object
+    image_io = BytesIO()
+    image.save(image_io, "PNG")
+    image_io.seek(0)
+    media = client.upload_media(media=image_io, media_category="tweet_image")
 
-#Removing text from video title
-ostTitle = randomVideo.title.replace('ブルーアーカイブ Blue Archive ', '')
+    #Removing text from video title
+    ostTitle = randomVideo.title.replace('ブルーアーカイブ Blue Archive ', '')
 
-print(f'The OST chosen is: {ostTitle}')
-print(f'The URL is: {link}')
+    #creating tweet
+    client.create_tweet(text=f'Today\'s OST is: {ostTitle}\n{link}', media_ids=[media.media_id])
+
+if __name__ == "__main__":
+    main()

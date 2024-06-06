@@ -1,1 +1,1 @@
-twitter bot for personal use
+Twitter bot using the Tweepy and PIL APIs in order to post a random OST from a playlist every day
